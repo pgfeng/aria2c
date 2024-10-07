@@ -1,7 +1,7 @@
 name: aria2c
 description: "Use dart and aria2c to connect websocket for JsonRPC communication."
 version: 0.0.1
-homepage:
+homepage: https://github.com/pgfeng/aria2c
 
 environment:
   sdk: ^3.5.3
