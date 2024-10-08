@@ -4,47 +4,81 @@ import 'dart:convert';
 
 import 'package:aria2c/PositionHow.dart';
 import 'package:aria2c/request/aria2cRequest.dart';
+import 'package:aria2c/result/Aria2cResult.dart';
+import 'package:aria2c/result/aria2cStatusResult.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_client/web_socket_client.dart';
 
 class Aria2cWebSocketRPC {
   final Uri rpcUri;
   final String rpcSecret;
-  late WebSocket _socket;
+  late WebSocketChannel _socket;
   final listeners = <String, Function>{};
+  final _responses = <String, Future<Map>>{};
+  final bool cancelOnError;
 
   Aria2cWebSocketRPC(this.rpcUri,
-      {this.rpcSecret = '',
-      Function? onError,
-      Function()? onDone,
-      bool cancelOnError = true}) {
-    _socket = WebSocket(rpcUri);
-    _socket.messages.listen((event) {
-      print(event);
-    }, onError: onError, onDone: onDone, cancelOnError: cancelOnError);
+      {this.rpcSecret = '', this.cancelOnError = true}) {}
+
+  connect() async {
+    _socket = WebSocketChannel.connect(rpcUri);
+    print('connect');
+    try{
+      await _socket.ready;
+    } catch(e) {
+      await Future.delayed(Duration(seconds: 1), () {
+        connect();
+      });
+      return;
+    }
+    _socket.stream.listen((event) {
+      var data = jsonDecode(event);
+      if (data['id'] != null) {
+        _responses[data['id']] = Future.value(data);
+      }
+    }, onDone: () {
+      _socket.sink.close();
+      print('Done');
+      // 重连
+      Future.delayed(Duration(seconds: 1), () {
+        connect();
+      });
+    }, onError: (e) {
+      print('Error');
+      // 重连
+      Future.delayed(Duration(seconds: 1), () {
+        connect();
+      });
+    }, cancelOnError: false);
+    print('???');
   }
 
-  Stream<dynamic> get messages => _socket.messages;
-
-  Future<Map> call(Aria2cRequest request) {
+  Future<Map> call(Aria2cRequest request) async {
     request.setToken(rpcSecret);
-    _socket.send(jsonEncode(request.toJson()));
-    return _socket.messages
-        .where((event) {
-          return jsonDecode(event)['id'] == request.id;
-        })
-        .first
-        .then((value) => jsonDecode(value));
+    String data = jsonEncode(request.toJson());
+    print(data);
+    // await _socket.sink.done;
+    _socket.sink.add(data);
+    print('等待返回');
+    while (!_responses.containsKey(request.id)) {
+      print('等待');
+      await Future.delayed(Duration(milliseconds: 100));
+      print('等待结束');
+    }
+    print('返回');
+    return _responses.remove(request.id)!;
   }
 
   // 添加下载任务
-  Future<Map> addUri(String uri, Map options) {
-    return call(Aria2cRequest(
+  Future<Aria2cResult> addUri(String uri, Map options) async {
+    Map result = await call(Aria2cRequest(
       method: 'aria2.addUri',
       params: [
         [uri],
         options,
       ],
     ));
+    return Aria2cResult.fromJson(result);
   }
 
   // 添加torrent下载任务
@@ -64,8 +98,10 @@ class Aria2cWebSocketRPC {
   }
 
   // 删除下载任务
-  Future<Map> remove(String gid) {
-    return call(Aria2cRequest(method: 'aria2.remove', params: [gid]));
+  Future<Aria2cResult> remove(String gid) async {
+    var result =
+        await call(Aria2cRequest(method: 'aria2.remove', params: [gid]));
+    return Aria2cResult.fromJson(result);
   }
 
   // 强制删除下载任务
@@ -104,13 +140,18 @@ class Aria2cWebSocketRPC {
   }
 
   // 获取下载任务状态
-  Future<Map> tellStatus(String gid) {
-    return call(Aria2cRequest(method: 'aria2.tellStatus', params: [gid]));
+  Future<Aria2cStatusResult> tellStatus(String gid) async {
+    Map data = await call(Aria2cRequest(method: 'aria2.tellStatus', params: [
+      gid,
+    ]));
+    return Aria2cStatusResult.fromJson(data);
   }
 
   // 获取下载任务的URI
   Future<Map> getUris(String gid) {
-    return call(Aria2cRequest(method: 'aria2.getUris', params: [gid]));
+    return call(Aria2cRequest(method: 'aria2.getUris', params: [
+      gid
+    ]));
   }
 
   // 获取下载任务的文件路径

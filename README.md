@@ -18,7 +18,15 @@ flutter pub add aria2
 You can use this package like this:
 
 ```dart
-const like = 'sample';
+import 'package:aria2c/aria2c.dart';
+Aria2cWebSocketRPC rpc = Aria2cWebSocketRPC(Uri.parse('ws://127.0.0.1:6800/jsonrpc'), rpcSecret: '123456789');
+await rpc.connect();
+Aria2cResult result = await rpc.addUri('https://example.com/file.zip',{
+    'dir':'/path/to/save',
+    'out':'file.zip'
+});
+String gid = result.gid;
+Aria2cStatusResult downloadStatus = await rpc.tellStatus(gid);
 ```
 
 ## Additional information

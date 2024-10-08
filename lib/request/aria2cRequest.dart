@@ -5,7 +5,7 @@ class Aria2cRequest {
   final String jsonrpc;
   final dynamic id;
   final List<dynamic> params;
-  late final String _token;
+  late String _token;
 
   Aria2cRequest(
       {required this.method,
