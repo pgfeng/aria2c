@@ -10,13 +10,20 @@ class Aria2cWebSocketRPC {
   final Uri rpcUri;
   final String rpcSecret;
   late WebSocket _socket;
+  final listeners = <String, Function>{};
 
-  Aria2cWebSocketRPC(this.rpcUri, {this.rpcSecret = ''}) {
+  Aria2cWebSocketRPC(this.rpcUri,
+      {this.rpcSecret = '',
+      Function? onError,
+      Function()? onDone,
+      bool cancelOnError = true}) {
     _socket = WebSocket(rpcUri);
     _socket.messages.listen((event) {
       print(event);
-    });
+    }, onError: onError, onDone: onDone, cancelOnError: cancelOnError);
   }
+
+  Stream<dynamic> get messages => _socket.messages;
 
   Future<Map> call(Aria2cRequest request) {
     request.setToken(rpcSecret);
@@ -39,7 +46,6 @@ class Aria2cWebSocketRPC {
       ],
     ));
   }
-
 
   // 添加torrent下载任务
   Future<Map> addTorrent(String torrent, Map options) {
@@ -129,12 +135,14 @@ class Aria2cWebSocketRPC {
 
   // 批量获取下载任务状态
   Future<Map> tellWaiting(int offset, int num) {
-    return call(Aria2cRequest(method: 'aria2.tellWaiting', params: [offset, num]));
+    return call(
+        Aria2cRequest(method: 'aria2.tellWaiting', params: [offset, num]));
   }
 
   // 获取已停止下载任务状态
   Future<Map> tellStopped(int offset, int num) {
-    return call(Aria2cRequest(method: 'aria2.tellStopped', params: [offset, num]));
+    return call(
+        Aria2cRequest(method: 'aria2.tellStopped', params: [offset, num]));
   }
 
   // 改变下载任务的位置
@@ -162,7 +170,8 @@ class Aria2cWebSocketRPC {
 
   // 改变下载任务的选项
   Future<Map> changeOption(String gid, Map options) {
-    return call(Aria2cRequest(method: 'aria2.changeOption', params: [gid, options]));
+    return call(
+        Aria2cRequest(method: 'aria2.changeOption', params: [gid, options]));
   }
 
   // 获取全局选项
@@ -172,7 +181,8 @@ class Aria2cWebSocketRPC {
 
   // 改变全局选项
   Future<Map> changeGlobalOption(Map options) {
-    return call(Aria2cRequest(method: 'aria2.changeGlobalOption', params: [options]));
+    return call(
+        Aria2cRequest(method: 'aria2.changeGlobalOption', params: [options]));
   }
 
   // 获取全局统计信息
@@ -187,7 +197,8 @@ class Aria2cWebSocketRPC {
 
   // 移除已完成/错误/已删除的下载
   Future<Map> removeDownloadResult(String gid) {
-    return call(Aria2cRequest(method: 'aria2.removeDownloadResult', params: [gid]));
+    return call(
+        Aria2cRequest(method: 'aria2.removeDownloadResult', params: [gid]));
   }
 
   // 获取版本信息
