@@ -1,5 +1,5 @@
 import 'package:aria2c/aria2cWebSocketRPC.dart';
-import 'package:example/Menu.dart';
+import 'package:example/menu.dart';
 import 'package:flutter/material.dart';
 Aria2cWebSocketRPC rpc = Aria2cWebSocketRPC(Uri.parse('ws://127.0.0.1:6800/jsonrpc'), rpcSecret: '123456789');
 Future<void> main() async {

@@ -2,9 +2,9 @@ library aria2c;
 
 import 'dart:convert';
 
-import 'package:aria2c/PositionHow.dart';
+import 'package:aria2c/positionHow.dart';
 import 'package:aria2c/request/aria2cRequest.dart';
-import 'package:aria2c/result/Aria2cResult.dart';
+import 'package:aria2c/result/aria2cResult.dart';
 import 'package:aria2c/result/aria2cStatusResult.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
