@@ -22,7 +22,6 @@ class Aria2cWebSocketRPC {
 
   connect() async {
     _socket = WebSocketChannel.connect(rpcUri);
-    print('connect');
     try{
       await _socket.ready;
     } catch(e) {
@@ -38,34 +37,23 @@ class Aria2cWebSocketRPC {
       }
     }, onDone: () {
       _socket.sink.close();
-      print('Done');
-      // 重连
       Future.delayed(Duration(seconds: 1), () {
         connect();
       });
     }, onError: (e) {
-      print('Error');
-      // 重连
       Future.delayed(Duration(seconds: 1), () {
         connect();
       });
-    }, cancelOnError: false);
-    print('???');
+    }, cancelOnError: cancelOnError);
   }
 
   Future<Map> call(Aria2cRequest request) async {
     request.setToken(rpcSecret);
     String data = jsonEncode(request.toJson());
-    print(data);
-    // await _socket.sink.done;
     _socket.sink.add(data);
-    print('等待返回');
     while (!_responses.containsKey(request.id)) {
-      print('等待');
       await Future.delayed(Duration(milliseconds: 100));
-      print('等待结束');
     }
-    print('返回');
     return _responses.remove(request.id)!;
   }
 
