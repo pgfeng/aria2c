@@ -7,7 +7,6 @@ import 'package:aria2c/request/aria2cRequest.dart';
 import 'package:aria2c/result/Aria2cResult.dart';
 import 'package:aria2c/result/aria2cStatusResult.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:web_socket_client/web_socket_client.dart';
 
 class Aria2cWebSocketRPC {
   final Uri rpcUri;
