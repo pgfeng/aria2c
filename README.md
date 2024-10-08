@@ -11,7 +11,7 @@
 ## Getting started
 
 ```
-flutter pub add aria2
+flutter pub add aria2c
 ```
 
 ## Usage
